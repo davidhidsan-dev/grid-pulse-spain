@@ -1,11 +1,6 @@
-# Dependencies for the grid-pulse-spain project
-# Add libraries such as apache-airflow, dbt, google-cloud-bigquery, streamlit, pandas, requests, etc.
-
-# Example:
-# apache-airflow==2.9.0
-# dbt-core==1.6.0
-# dbt-bigquery==1.6.0
-# google-cloud-bigquery==3.10.0
-# streamlit==1.28.0
-# pandas==2.2.0
-# requests==2.31.0
+pandas
+requests
+python-dotenv
+google-cloud-bigquery
+dbt-bigquery
+streamlit
