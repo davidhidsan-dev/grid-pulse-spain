@@ -13,6 +13,7 @@ logger = get_logger(__name__)
 class REDataClient:
     """Minimal client for the REData public API."""
 
+    SOURCE = "redata"
     DEFAULT_BASE_URL = "https://apidatos.ree.es"
     ENDPOINT = "/es/datos/balance/balance-electrico"
     # REData documents hour broadly, but this widget currently works with day.

@@ -2,6 +2,7 @@
 
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -20,14 +21,20 @@ def ensure_data_folder(path: Path) -> Path:
 def main() -> None:
     client = REDataClient()
     output_folder = ensure_data_folder(RE_DATA_RAW_PATH)
-    response = client.fetch_balance(
+    payload = client.fetch_balance(
         start_date="2025-01-01T00:00",
         end_date="2025-01-07T23:59",
     )
+    raw_response = {
+        "source": client.SOURCE,
+        "endpoint": client.ENDPOINT,
+        "extracted_at": datetime.now(timezone.utc).isoformat(),
+        "payload": payload,
+    }
 
     output_file = output_folder / "redata_sample.json"
     with output_file.open("w", encoding="utf-8") as handler:
-        json.dump(response, handler, indent=2, ensure_ascii=False)
+        json.dump(raw_response, handler, indent=2, ensure_ascii=False)
 
     print(f"Saved REData response to {output_file}")
 

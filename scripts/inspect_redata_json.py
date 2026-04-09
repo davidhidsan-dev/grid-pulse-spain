@@ -14,9 +14,8 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.config.settings import RE_DATA_PROCESSED_PATH, RE_DATA_RAW_PATH
+from src.extract.redata.client import REDataClient
 
-SOURCE = "redata"
-ENDPOINT = "balance/balance-electrico"
 OUTPUT_FILE_NAME = "redata_balance_electrico_normalized.csv"
 
 
@@ -52,6 +51,19 @@ def load_json(path: Path) -> dict[str, Any]:
     return payload
 
 
+def extract_metadata(raw_json: dict[str, Any]) -> tuple[dict[str, Any], str, str]:
+    """Read extraction metadata from the saved raw file."""
+    payload = raw_json.get("payload")
+    if isinstance(payload, dict):
+        return (
+            payload,
+            str(raw_json.get("source", REDataClient.SOURCE)),
+            str(raw_json.get("endpoint", REDataClient.ENDPOINT)),
+        )
+
+    return raw_json, REDataClient.SOURCE, REDataClient.ENDPOINT
+
+
 def extract_blocks(payload: dict[str, Any]) -> list[dict[str, Any]]:
     """Return the main included blocks from the REData response."""
     blocks = payload.get("included", [])
@@ -60,7 +72,12 @@ def extract_blocks(payload: dict[str, Any]) -> list[dict[str, Any]]:
     return [block for block in blocks if isinstance(block, dict)]
 
 
-def normalize_blocks(blocks: list[dict[str, Any]], ingestion_timestamp: str) -> list[dict[str, Any]]:
+def normalize_blocks(
+    blocks: list[dict[str, Any]],
+    source: str,
+    endpoint: str,
+    ingestion_timestamp: str,
+) -> list[dict[str, Any]]:
     """Explode content and values into a flat list of observation rows."""
     rows: list[dict[str, Any]] = []
 
@@ -87,8 +104,8 @@ def normalize_blocks(blocks: list[dict[str, Any]], ingestion_timestamp: str) -> 
 
                 rows.append(
                     {
-                        "source": SOURCE,
-                        "endpoint": ENDPOINT,
+                        "source": source,
+                        "endpoint": endpoint,
                         "ingestion_timestamp": ingestion_timestamp,
                         "group_type": block.get("type"),
                         "group_id": block.get("id"),
@@ -127,13 +144,16 @@ def main() -> None:
     args = parser.parse_args()
 
     input_file = resolve_input_file(args.file)
-    payload = load_json(input_file)
+    raw_json = load_json(input_file)
+    payload, source, endpoint = extract_metadata(raw_json)
     blocks = extract_blocks(payload)
     ingestion_timestamp = datetime.now(timezone.utc).isoformat()
-    rows = normalize_blocks(blocks, ingestion_timestamp)
+    rows = normalize_blocks(blocks, source, endpoint, ingestion_timestamp)
 
     print(f"Input file: {input_file}")
-    print(f"Top-level keys: {', '.join(payload.keys())}")
+    print(f"Top-level keys: {', '.join(raw_json.keys())}")
+    print(f"Source: {source}")
+    print(f"Endpoint: {endpoint}")
     print(f"Main blocks found: {len(blocks)}")
     print(f"Block names: {', '.join(str(block.get('type')) for block in blocks)}")
     print(f"Normalized rows: {len(rows)}")
