@@ -96,8 +96,6 @@ def normalize_blocks(
             if not isinstance(values, list):
                 continue
 
-            raw_record_json = json.dumps(record, ensure_ascii=False)
-
             for value_item in values:
                 if not isinstance(value_item, dict):
                     continue
@@ -122,7 +120,6 @@ def normalize_blocks(
                         "datetime": value_item.get("datetime"),
                         "value": value_item.get("value"),
                         "percentage": value_item.get("percentage"),
-                        "raw_record_json": raw_record_json,
                     }
                 )
 
