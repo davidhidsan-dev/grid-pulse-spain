@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: redata_raw
+    description: "Raw REData tables loaded into BigQuery."
+    database: "{{ env_var('GCP_PROJECT_ID') }}"
+    schema: "{{ env_var('BIGQUERY_DATASET_RAW') }}"
+    tables:
+      - name: redata_balance_electrico
+        description: "Raw electric balance data loaded from REData."

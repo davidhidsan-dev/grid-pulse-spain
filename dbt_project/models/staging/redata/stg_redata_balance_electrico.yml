@@ -1,0 +1,18 @@
+version: 2
+
+models:
+  - name: stg_redata_balance_electrico
+    description: "Staging model for the REData electric balance raw table."
+    columns:
+      - name: datetime
+        description: "Observation timestamp from REData."
+        tests:
+          - not_null
+      - name: metric_type
+        description: "Metric category reported by REData."
+        tests:
+          - not_null
+      - name: group_type
+        description: "Top-level grouping reported by REData."
+        tests:
+          - not_null
