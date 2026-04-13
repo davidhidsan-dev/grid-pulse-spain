@@ -17,6 +17,8 @@ LOCATION_NAME = "Madrid"
 LATITUDE = 40.4168
 LONGITUDE = -3.7038
 TIMEZONE = "Europe/Madrid"
+START_DATE = "2025-01-01"
+END_DATE = "2025-03-31"
 DAILY_VARIABLES = [
     "temperature_2m_max",
     "temperature_2m_mean",
@@ -35,16 +37,16 @@ def ensure_data_folder(path: Path) -> Path:
 
 
 def main() -> None:
-    """Fetch a small daily historical sample for Madrid and save the raw JSON."""
+    """Fetch a daily historical sample for Madrid and save the raw JSON."""
     client = OpenMeteoClient()
     output_folder = ensure_data_folder(OPENMETEO_RAW_PATH)
 
-    # Keep the first run small and easy to inspect.
+    # We keep daily weather data, then aggregate it monthly to match Madrid REData.
     payload = client.fetch_daily_history(
         latitude=LATITUDE,
         longitude=LONGITUDE,
-        start_date="2025-01-01",
-        end_date="2025-01-07",
+        start_date=START_DATE,
+        end_date=END_DATE,
         timezone=TIMEZONE,
         daily=DAILY_VARIABLES,
     )

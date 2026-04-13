@@ -16,7 +16,7 @@ class REDataClient:
     SOURCE = "redata"
     DEFAULT_BASE_URL = "https://apidatos.ree.es"
     ENDPOINT = "/es/datos/balance/balance-electrico"
-    # REData documents hour broadly, but this widget currently works with day.
+    # Daily works for some scopes, but Madrid regional balance is treated as monthly.
     DEFAULT_TIME_TRUNC = "day"
     DEFAULT_GEO_TRUNC = "electric_system"
     AUTONOMOUS_COMMUNITY_GEO_LIMIT = "ccaa"
@@ -52,8 +52,9 @@ class REDataClient:
         start_date: str,
         end_date: str,
         autonomous_community_id: int | str | None = None,
+        time_trunc: str = DEFAULT_TIME_TRUNC,
     ) -> dict[str, Any]:
-        """Fetch balance-electrico data using daily granularity.
+        """Fetch balance-electrico data using the requested temporal granularity.
 
         When an autonomous community is provided, REData requires the
         geo_trunc/geo_limit/geo_ids combination documented in the official API.
@@ -61,7 +62,7 @@ class REDataClient:
         params = {
             "start_date": start_date,
             "end_date": end_date,
-            "time_trunc": self.DEFAULT_TIME_TRUNC,
+            "time_trunc": time_trunc,
         }
 
         if autonomous_community_id is not None:

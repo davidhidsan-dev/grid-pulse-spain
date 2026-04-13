@@ -1,4 +1,4 @@
-"""Normalize the raw REData balance JSON into a flat exploration table."""
+"""Normalize the raw REData Madrid balance JSON into a flat monthly table."""
 
 import argparse
 import json
@@ -16,7 +16,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.config.settings import RE_DATA_PROCESSED_PATH, RE_DATA_RAW_PATH
 from src.extract.redata.client import REDataClient
 
-OUTPUT_FILE_NAME = "redata_balance_electrico_normalized.csv"
+OUTPUT_FILE_NAME = "redata_balance_electrico_madrid_monthly_normalized.csv"
 
 
 def ensure_folder(path: Path) -> Path:
@@ -78,7 +78,7 @@ def normalize_blocks(
     endpoint: str,
     ingestion_timestamp: str,
 ) -> list[dict[str, Any]]:
-    """Explode content and values into a flat list of observation rows."""
+    """Explode content and values into a flat list of monthly observation rows."""
     rows: list[dict[str, Any]] = []
 
     for block in blocks:
@@ -117,6 +117,9 @@ def normalize_blocks(
                         "last_update": record_attributes.get("last-update"),
                         "total": record_attributes.get("total"),
                         "total_percentage": record_attributes.get("total-percentage"),
+                        # Madrid regional balance is handled monthly because the
+                        # practical REData regional series is not usable daily.
+                        "year_month": str(value_item.get("datetime", ""))[:7],
                         "datetime": value_item.get("datetime"),
                         "value": value_item.get("value"),
                         "percentage": value_item.get("percentage"),
@@ -136,7 +139,7 @@ def save_normalized_csv(rows: list[dict[str, Any]]) -> Path:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Normalize a raw REData balance JSON file.")
+    parser = argparse.ArgumentParser(description="Normalize a raw monthly REData balance JSON file.")
     parser.add_argument("--file", help="JSON file name inside data/raw/redata/")
     args = parser.parse_args()
 

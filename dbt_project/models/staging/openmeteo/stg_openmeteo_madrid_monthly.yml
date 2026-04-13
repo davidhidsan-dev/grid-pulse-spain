@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: stg_openmeteo_madrid_monthly
+    description: "Staging model for the monthly Open-Meteo raw table for Madrid."
+    columns:
+      - name: year_month
+        description: "Monthly grain used to align climate with Madrid energy."
+        tests:
+          - not_null
+      - name: location_name
+        description: "Location label saved during extraction."
+        tests:
+          - not_null

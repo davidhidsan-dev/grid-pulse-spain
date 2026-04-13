@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: openmeteo_raw
+    description: "Raw Open-Meteo tables loaded into BigQuery."
+    database: "{{ env_var('GCP_PROJECT_ID') }}"
+    schema: "{{ env_var('BIGQUERY_DATASET_RAW') }}"
+    tables:
+      - name: openmeteo_madrid_monthly
+        description: "Raw monthly Open-Meteo data for Madrid."

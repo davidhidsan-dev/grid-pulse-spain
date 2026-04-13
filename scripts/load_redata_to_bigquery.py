@@ -10,12 +10,12 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.config.settings import BIGQUERY_DATASET_RAW, GCP_PROJECT_ID, RE_DATA_PROCESSED_PATH
 from src.load.bigquery_loader import REDATA_BALANCE_SCHEMA, get_bigquery_client, load_csv_to_bigquery
 
-CSV_FILE_NAME = "redata_balance_electrico_normalized.csv"
+CSV_FILE_NAME = "redata_balance_electrico_madrid_monthly_normalized.csv"
 TABLE_NAME = "redata_balance_electrico"
 
 
 def main() -> None:
-    """Load the processed REData balance CSV into BigQuery."""
+    """Load the processed monthly REData Madrid balance CSV into BigQuery."""
     csv_path = RE_DATA_PROCESSED_PATH / CSV_FILE_NAME
     table_id = load_csv_to_bigquery(
         csv_path=csv_path,

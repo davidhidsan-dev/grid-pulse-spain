@@ -19,6 +19,7 @@ select
     cast(raw.last_update as timestamp) as last_update,
     cast(raw.total as float64) as total,
     cast(raw.total_percentage as float64) as total_percentage,
+    cast(raw.year_month as string) as year_month,
     cast(raw.datetime as timestamp) as datetime,
     cast(raw.value as float64) as value,
     cast(raw.percentage as float64) as percentage

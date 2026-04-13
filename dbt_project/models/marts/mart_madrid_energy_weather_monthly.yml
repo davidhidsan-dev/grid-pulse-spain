@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: mart_madrid_energy_weather_monthly
+    description: "Monthly analytical join between Madrid energy balance and Madrid weather."
+    columns:
+      - name: year_month
+        description: "Shared monthly grain used to join energy and weather."
+        tests:
+          - not_null
+      - name: metric_type
+        description: "Energy metric reported by REData."
+        tests:
+          - not_null

@@ -24,9 +24,25 @@ REDATA_BALANCE_SCHEMA = [
     bigquery.SchemaField("last_update", "TIMESTAMP"),
     bigquery.SchemaField("total", "FLOAT64"),
     bigquery.SchemaField("total_percentage", "FLOAT64"),
+    bigquery.SchemaField("year_month", "STRING"),
     bigquery.SchemaField("datetime", "TIMESTAMP"),
     bigquery.SchemaField("value", "FLOAT64"),
     bigquery.SchemaField("percentage", "FLOAT64"),
+]
+
+OPENMETEO_MADRID_MONTHLY_SCHEMA = [
+    bigquery.SchemaField("source", "STRING"),
+    bigquery.SchemaField("location_name", "STRING"),
+    bigquery.SchemaField("latitude", "FLOAT64"),
+    bigquery.SchemaField("longitude", "FLOAT64"),
+    bigquery.SchemaField("timezone", "STRING"),
+    bigquery.SchemaField("year_month", "STRING"),
+    bigquery.SchemaField("temperature_2m_max_avg", "FLOAT64"),
+    bigquery.SchemaField("temperature_2m_mean_avg", "FLOAT64"),
+    bigquery.SchemaField("temperature_2m_min_avg", "FLOAT64"),
+    bigquery.SchemaField("precipitation_sum_total", "FLOAT64"),
+    bigquery.SchemaField("wind_speed_10m_max_avg", "FLOAT64"),
+    bigquery.SchemaField("shortwave_radiation_sum_total", "FLOAT64"),
 ]
 
 
