@@ -12,6 +12,8 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.config.settings import RE_DATA_RAW_PATH
 from src.extract.redata.client import REDataClient
 
+MADRID_AUTONOMOUS_COMMUNITY_ID = 13
+
 
 def ensure_data_folder(path: Path) -> Path:
     path.mkdir(parents=True, exist_ok=True)
@@ -24,6 +26,7 @@ def main() -> None:
     payload = client.fetch_balance(
         start_date="2025-01-01T00:00",
         end_date="2025-01-07T23:59",
+        autonomous_community_id=MADRID_AUTONOMOUS_COMMUNITY_ID,
     )
     raw_response = {
         "source": client.SOURCE,

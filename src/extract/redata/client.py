@@ -18,6 +18,8 @@ class REDataClient:
     ENDPOINT = "/es/datos/balance/balance-electrico"
     # REData documents hour broadly, but this widget currently works with day.
     DEFAULT_TIME_TRUNC = "day"
+    DEFAULT_GEO_TRUNC = "electric_system"
+    AUTONOMOUS_COMMUNITY_GEO_LIMIT = "ccaa"
 
     def __init__(self, base_url: str | None = None):
         self.base_url = base_url or os.getenv("REDATA_BASE_URL", self.DEFAULT_BASE_URL)
@@ -45,13 +47,31 @@ class REDataClient:
 
         return data
 
-    def fetch_balance(self, start_date: str, end_date: str) -> dict[str, Any]:
-        """Fetch balance-electrico data using the initial daily granularity."""
+    def fetch_balance(
+        self,
+        start_date: str,
+        end_date: str,
+        autonomous_community_id: int | str | None = None,
+    ) -> dict[str, Any]:
+        """Fetch balance-electrico data using daily granularity.
+
+        When an autonomous community is provided, REData requires the
+        geo_trunc/geo_limit/geo_ids combination documented in the official API.
+        """
         params = {
             "start_date": start_date,
             "end_date": end_date,
             "time_trunc": self.DEFAULT_TIME_TRUNC,
         }
 
-        logger.info("Requesting REData balance data")
+        if autonomous_community_id is not None:
+            params.update(
+                {
+                    "geo_trunc": self.DEFAULT_GEO_TRUNC,
+                    "geo_limit": self.AUTONOMOUS_COMMUNITY_GEO_LIMIT,
+                    "geo_ids": str(autonomous_community_id),
+                }
+            )
+
+        logger.info("Requesting REData balance data with params: %s", params)
         return self._get(self.ENDPOINT, params)
