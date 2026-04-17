@@ -18,7 +18,7 @@ LATITUDE = 40.4168
 LONGITUDE = -3.7038
 TIMEZONE = "Europe/Madrid"
 START_DATE = "2025-01-01"
-END_DATE = "2025-03-31"
+END_DATE = "2025-12-31"
 DAILY_VARIABLES = [
     "temperature_2m_max",
     "temperature_2m_mean",

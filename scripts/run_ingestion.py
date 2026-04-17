@@ -15,7 +15,7 @@ from src.extract.redata.client import REDataClient
 MADRID_AUTONOMOUS_COMMUNITY_ID = 13
 MADRID_TIME_TRUNC = "month"
 START_DATE = "2025-01-01T00:00"
-END_DATE = "2025-03-31T23:59"
+END_DATE = "2025-12-31T23:59"
 
 
 def ensure_data_folder(path: Path) -> Path:

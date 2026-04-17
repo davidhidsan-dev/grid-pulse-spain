@@ -4,8 +4,11 @@ import os
 from typing import Any
 
 import requests
+from dotenv import load_dotenv
 
 from src.utils.logger import get_logger
+
+load_dotenv()
 
 logger = get_logger(__name__)
 
@@ -15,21 +18,23 @@ class REDataClient:
 
     SOURCE = "redata"
     DEFAULT_BASE_URL = "https://apidatos.ree.es"
+    DEFAULT_TIMEOUT_SECONDS = 30
     ENDPOINT = "/es/datos/balance/balance-electrico"
     # Daily works for some scopes, but Madrid regional balance is treated as monthly.
     DEFAULT_TIME_TRUNC = "day"
     DEFAULT_GEO_TRUNC = "electric_system"
     AUTONOMOUS_COMMUNITY_GEO_LIMIT = "ccaa"
 
-    def __init__(self, base_url: str | None = None):
+    def __init__(self, base_url: str | None = None, timeout: int | None = None):
         self.base_url = base_url or os.getenv("REDATA_BASE_URL", self.DEFAULT_BASE_URL)
+        self.timeout = timeout if timeout is not None else self.DEFAULT_TIMEOUT_SECONDS
 
     def _get(self, endpoint: str, params: dict[str, Any]) -> dict[str, Any]:
         """Run a GET request and return the decoded JSON payload."""
         url = f"{self.base_url}{endpoint}"
 
         try:
-            response = requests.get(url, params=params, timeout=30)
+            response = requests.get(url, params=params, timeout=self.timeout)
             response.raise_for_status()
         except requests.RequestException as error:
             logger.error("REData request failed: %s", error)

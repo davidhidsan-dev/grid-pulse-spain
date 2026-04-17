@@ -16,3 +16,5 @@ models:
   grid_pulse_spain:
     staging:
       +materialized: view
+    marts:
+      +materialized: table

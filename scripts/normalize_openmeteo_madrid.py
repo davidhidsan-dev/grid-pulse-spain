@@ -73,10 +73,14 @@ def normalize_daily_payload(raw_json: dict[str, Any]) -> list[dict[str, Any]]:
 
         for column in DAILY_COLUMNS:
             values = daily.get(column, [])
-            if isinstance(values, list) and index < len(values):
-                row[column] = values[index]
-            else:
-                row[column] = None
+            if not isinstance(values, list):
+                raise ValueError(f"Expected 'payload.daily.{column}' to be a list.")
+            if len(values) != len(dates):
+                raise ValueError(
+                    f"Expected 'payload.daily.{column}' to have {len(dates)} values, "
+                    f"but found {len(values)}."
+                )
+            row[column] = values[index]
 
         rows.append(row)
 

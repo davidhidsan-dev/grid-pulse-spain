@@ -1,11 +1,14 @@
-
 """Small client for the Open-Meteo Historical Weather API."""
 
+import os
 from typing import Any
 
 import requests
+from dotenv import load_dotenv
 
 from src.utils.logger import get_logger
+
+load_dotenv()
 
 logger = get_logger(__name__)
 
@@ -17,14 +20,16 @@ class OpenMeteoClient:
     DEFAULT_BASE_URL = "https://archive-api.open-meteo.com/v1/archive"
     DEFAULT_TIMEOUT_SECONDS = 30
 
-    def __init__(self, base_url: str | None = None, timeout: int = DEFAULT_TIMEOUT_SECONDS):
-        self.base_url = base_url or self.DEFAULT_BASE_URL
-        self.timeout = timeout
+    def __init__(self, base_url: str | None = None, timeout: int | None = None):
+        self.base_url = base_url or os.getenv("OPEN_METEO_BASE_URL", self.DEFAULT_BASE_URL)
+        self.timeout = timeout if timeout is not None else self.DEFAULT_TIMEOUT_SECONDS
 
     def _get(self, params: dict[str, Any]) -> dict[str, Any]:
         """Send a GET request to Open-Meteo and return the parsed JSON body."""
+        url = self.base_url
+
         try:
-            response = requests.get(self.base_url, params=params, timeout=self.timeout)
+            response = requests.get(url, params=params, timeout=self.timeout)
             response.raise_for_status()
         except requests.RequestException as error:
             logger.error("Open-Meteo request failed: %s", error)

@@ -1,5 +1,3 @@
-{{ config(materialized='table') }}
-
 with redata_monthly as (
     select
         year_month,
