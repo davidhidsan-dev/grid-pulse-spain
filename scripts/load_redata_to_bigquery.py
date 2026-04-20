@@ -3,6 +3,8 @@
 import sys
 from pathlib import Path
 
+from google.cloud import bigquery
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
@@ -10,7 +12,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.config.settings import BIGQUERY_DATASET_RAW, GCP_PROJECT_ID, RE_DATA_PROCESSED_PATH
 from src.load.bigquery_loader import REDATA_BALANCE_SCHEMA, get_bigquery_client, load_csv_to_bigquery
 
-CSV_FILE_NAME = "redata_balance_electrico_madrid_monthly_normalized.csv"
+CSV_FILE_NAME = "redata_balance_electrico_monthly_normalized.csv"
 TABLE_NAME = "redata_balance_electrico"
 
 
@@ -21,6 +23,7 @@ def main() -> None:
         csv_path=csv_path,
         table_name=TABLE_NAME,
         schema=REDATA_BALANCE_SCHEMA,
+        write_disposition=bigquery.WriteDisposition.WRITE_APPEND,
     )
 
     client = get_bigquery_client()

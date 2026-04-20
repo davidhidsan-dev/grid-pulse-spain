@@ -1,5 +1,6 @@
-"""Normalize the raw Open-Meteo Madrid JSON into a flat daily CSV."""
+"""Normalize one or more raw Open-Meteo JSON files into a flat daily CSV."""
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -11,9 +12,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-INPUT_FILE = PROJECT_ROOT / "data" / "raw" / "openmeteo" / "openmeteo_madrid_daily_sample.json"
 OUTPUT_FOLDER = PROJECT_ROOT / "data" / "processed" / "openmeteo"
-OUTPUT_FILE_NAME = "openmeteo_madrid_daily_normalized.csv"
+INPUT_FOLDER = PROJECT_ROOT / "data" / "raw" / "openmeteo"
+OUTPUT_FILE_NAME = "openmeteo_daily_normalized.csv"
 DAILY_COLUMNS = [
     "temperature_2m_max",
     "temperature_2m_mean",
@@ -41,6 +42,24 @@ def load_json(path: Path) -> dict[str, Any]:
     return payload
 
 
+def resolve_input_files(region_slugs: list[str] | None) -> list[Path]:
+    """Resolve one or more raw Open-Meteo files."""
+    input_folder = ensure_folder(INPUT_FOLDER)
+    if region_slugs:
+        input_files = []
+        for region_slug in region_slugs:
+            input_file = input_folder / f"openmeteo_{region_slug}_daily_sample.json"
+            if not input_file.exists():
+                raise FileNotFoundError(f"JSON file not found: {input_file}")
+            input_files.append(input_file)
+        return input_files
+
+    json_files = sorted(input_folder.glob("*.json"), key=lambda path: path.stat().st_mtime, reverse=True)
+    if not json_files:
+        raise FileNotFoundError(f"No JSON files found in: {input_folder}")
+    return json_files
+
+
 def normalize_daily_payload(raw_json: dict[str, Any]) -> list[dict[str, Any]]:
     """Flatten the Open-Meteo daily payload into one row per day."""
     payload = raw_json.get("payload", {})
@@ -64,10 +83,14 @@ def normalize_daily_payload(raw_json: dict[str, Any]) -> list[dict[str, Any]]:
     for index, date_value in enumerate(dates):
         row = {
             "source": raw_json.get("source"),
+            "ingestion_timestamp": raw_json.get("extracted_at"),
+            "region_slug": raw_json.get("region_slug"),
+            "region_name": raw_json.get("region_name"),
             "location_name": raw_json.get("location_name"),
             "latitude": raw_json.get("latitude"),
             "longitude": raw_json.get("longitude"),
             "timezone": raw_json.get("timezone"),
+            "weather_point_type": raw_json.get("weather_point_type"),
             "date": date_value,
         }
 
@@ -98,12 +121,28 @@ def save_csv(rows: list[dict[str, Any]]) -> Path:
 
 
 def main() -> None:
-    """Read the raw Madrid sample and save a flat daily CSV."""
-    raw_json = load_json(INPUT_FILE)
-    rows = normalize_daily_payload(raw_json)
+    """Read raw Open-Meteo files and save a flat daily CSV."""
+    parser = argparse.ArgumentParser(description="Normalize raw Open-Meteo JSON files.")
+    parser.add_argument("--regions", help="Comma-separated region slugs, for example: madrid,asturias")
+    args = parser.parse_args()
+
+    region_slugs = (
+        [item.strip().lower() for item in args.regions.split(",") if item.strip()]
+        if args.regions
+        else None
+    )
+    input_files = resolve_input_files(region_slugs)
+    rows: list[dict[str, Any]] = []
+
+    for input_file in input_files:
+        raw_json = load_json(input_file)
+        file_rows = normalize_daily_payload(raw_json)
+        rows.extend(file_rows)
+        print(f"Input file: {input_file}")
+        print(f"Normalized rows from file: {len(file_rows)}")
+
     output_file = save_csv(rows)
 
-    print(f"Input file: {INPUT_FILE}")
     print(f"Normalized rows: {len(rows)}")
     if rows:
         print("Example normalized row:")

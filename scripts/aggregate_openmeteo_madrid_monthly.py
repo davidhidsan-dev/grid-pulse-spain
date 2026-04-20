@@ -1,4 +1,4 @@
-"""Aggregate the normalized Open-Meteo Madrid daily CSV into a monthly CSV."""
+"""Aggregate the normalized Open-Meteo daily CSV into a monthly CSV."""
 
 import sys
 from pathlib import Path
@@ -9,9 +9,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-INPUT_FILE = PROJECT_ROOT / "data" / "processed" / "openmeteo" / "openmeteo_madrid_daily_normalized.csv"
+INPUT_FILE = PROJECT_ROOT / "data" / "processed" / "openmeteo" / "openmeteo_daily_normalized.csv"
 OUTPUT_FOLDER = PROJECT_ROOT / "data" / "processed" / "openmeteo"
-OUTPUT_FILE_NAME = "openmeteo_madrid_monthly_normalized.csv"
+OUTPUT_FILE_NAME = "openmeteo_monthly_normalized.csv"
 
 
 def ensure_folder(path: Path) -> Path:
@@ -21,23 +21,28 @@ def ensure_folder(path: Path) -> Path:
 
 
 def aggregate_daily_to_monthly(dataframe: pd.DataFrame) -> pd.DataFrame:
-    """Aggregate the daily Madrid weather table to monthly grain.
-
-    The project is fixed to monthly grain for Madrid because the REData regional
-    balance endpoint is only practically usable at monthly granularity.
-    """
+    """Aggregate the daily weather table to monthly grain by region."""
     dataframe = dataframe.copy()
     dataframe["date"] = pd.to_datetime(dataframe["date"])
     dataframe["year_month"] = dataframe["date"].dt.strftime("%Y-%m")
 
     monthly = (
-        dataframe.groupby("year_month", as_index=False)
+        dataframe.groupby(
+            [
+                "source",
+                "ingestion_timestamp",
+                "region_slug",
+                "region_name",
+                "location_name",
+                "latitude",
+                "longitude",
+                "timezone",
+                "weather_point_type",
+                "year_month",
+            ],
+            as_index=False,
+        )
         .agg(
-            source=("source", "first"),
-            location_name=("location_name", "first"),
-            latitude=("latitude", "first"),
-            longitude=("longitude", "first"),
-            timezone=("timezone", "first"),
             temperature_2m_max_avg=("temperature_2m_max", "mean"),
             temperature_2m_mean_avg=("temperature_2m_mean", "mean"),
             temperature_2m_min_avg=("temperature_2m_min", "mean"),
@@ -50,10 +55,14 @@ def aggregate_daily_to_monthly(dataframe: pd.DataFrame) -> pd.DataFrame:
     monthly = monthly[
         [
             "source",
+            "ingestion_timestamp",
+            "region_slug",
+            "region_name",
             "location_name",
             "latitude",
             "longitude",
             "timezone",
+            "weather_point_type",
             "year_month",
             "temperature_2m_max_avg",
             "temperature_2m_mean_avg",

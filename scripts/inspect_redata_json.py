@@ -1,4 +1,4 @@
-"""Normalize the raw REData Madrid balance JSON into a flat monthly table."""
+"""Normalize one or more raw REData balance JSON files into a flat monthly table."""
 
 import argparse
 import json
@@ -16,7 +16,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.config.settings import RE_DATA_PROCESSED_PATH, RE_DATA_RAW_PATH
 from src.extract.redata.client import REDataClient
 
-OUTPUT_FILE_NAME = "redata_balance_electrico_madrid_monthly_normalized.csv"
+OUTPUT_FILE_NAME = "redata_balance_electrico_monthly_normalized.csv"
 
 
 def ensure_folder(path: Path) -> Path:
@@ -41,6 +41,24 @@ def resolve_input_file(file_name: str | None) -> Path:
     return json_files[0]
 
 
+def resolve_input_files(file_name: str | None, region_slugs: list[str] | None) -> list[Path]:
+    """Resolve one or more input files from a file name or region list."""
+    if file_name:
+        return [resolve_input_file(file_name)]
+
+    input_folder = ensure_folder(RE_DATA_RAW_PATH)
+    if region_slugs:
+        input_files = []
+        for region_slug in region_slugs:
+            input_file = input_folder / f"redata_{region_slug}_monthly_sample.json"
+            if not input_file.exists():
+                raise FileNotFoundError(f"JSON file not found: {input_file}")
+            input_files.append(input_file)
+        return input_files
+
+    return [resolve_input_file(None)]
+
+
 def load_json(path: Path) -> dict[str, Any]:
     """Load the JSON payload from disk."""
     with path.open("r", encoding="utf-8") as handler:
@@ -51,17 +69,33 @@ def load_json(path: Path) -> dict[str, Any]:
     return payload
 
 
-def extract_metadata(raw_json: dict[str, Any]) -> tuple[dict[str, Any], str, str]:
+def extract_metadata(
+    raw_json: dict[str, Any], default_ingestion_timestamp: str
+) -> tuple[dict[str, Any], dict[str, Any]]:
     """Read extraction metadata from the saved raw file."""
     payload = raw_json.get("payload")
     if isinstance(payload, dict):
-        return (
-            payload,
-            str(raw_json.get("source", REDataClient.SOURCE)),
-            str(raw_json.get("endpoint", REDataClient.ENDPOINT)),
-        )
+        metadata = {
+            "source": str(raw_json.get("source", REDataClient.SOURCE)),
+            "endpoint": str(raw_json.get("endpoint", REDataClient.ENDPOINT)),
+            "region_slug": str(raw_json.get("region_slug", "")),
+            "region_name": str(raw_json.get("region_name", "")),
+            "redata_geo_id": raw_json.get("redata_geo_id"),
+            "ingestion_timestamp": str(
+                raw_json.get("extracted_at", default_ingestion_timestamp)
+            ),
+        }
+        return payload, metadata
 
-    return raw_json, REDataClient.SOURCE, REDataClient.ENDPOINT
+    metadata = {
+        "source": REDataClient.SOURCE,
+        "endpoint": REDataClient.ENDPOINT,
+        "region_slug": "",
+        "region_name": "",
+        "redata_geo_id": None,
+        "ingestion_timestamp": default_ingestion_timestamp,
+    }
+    return raw_json, metadata
 
 
 def extract_blocks(payload: dict[str, Any]) -> list[dict[str, Any]]:
@@ -74,9 +108,7 @@ def extract_blocks(payload: dict[str, Any]) -> list[dict[str, Any]]:
 
 def normalize_blocks(
     blocks: list[dict[str, Any]],
-    source: str,
-    endpoint: str,
-    ingestion_timestamp: str,
+    metadata: dict[str, Any],
 ) -> list[dict[str, Any]]:
     """Explode content and values into a flat list of monthly observation rows."""
     rows: list[dict[str, Any]] = []
@@ -102,9 +134,12 @@ def normalize_blocks(
 
                 rows.append(
                     {
-                        "source": source,
-                        "endpoint": endpoint,
-                        "ingestion_timestamp": ingestion_timestamp,
+                        "source": metadata["source"],
+                        "endpoint": metadata["endpoint"],
+                        "region_slug": metadata["region_slug"],
+                        "region_name": metadata["region_name"],
+                        "redata_geo_id": metadata["redata_geo_id"],
+                        "ingestion_timestamp": metadata["ingestion_timestamp"],
                         "group_type": block.get("type"),
                         "group_id": block.get("id"),
                         "group_title": block_attributes.get("title"),
@@ -141,22 +176,35 @@ def save_normalized_csv(rows: list[dict[str, Any]]) -> Path:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Normalize a raw monthly REData balance JSON file.")
     parser.add_argument("--file", help="JSON file name inside data/raw/redata/")
+    parser.add_argument("--regions", help="Comma-separated region slugs, for example: madrid,asturias")
     args = parser.parse_args()
 
-    input_file = resolve_input_file(args.file)
-    raw_json = load_json(input_file)
-    payload, source, endpoint = extract_metadata(raw_json)
-    blocks = extract_blocks(payload)
-    ingestion_timestamp = datetime.now(timezone.utc).isoformat()
-    rows = normalize_blocks(blocks, source, endpoint, ingestion_timestamp)
+    region_slugs = (
+        [item.strip().lower() for item in args.regions.split(",") if item.strip()]
+        if args.regions
+        else None
+    )
+    input_files = resolve_input_files(args.file, region_slugs)
+    rows: list[dict[str, Any]] = []
 
-    print(f"Input file: {input_file}")
-    print(f"Top-level keys: {', '.join(raw_json.keys())}")
-    print(f"Source: {source}")
-    print(f"Endpoint: {endpoint}")
-    print(f"Main blocks found: {len(blocks)}")
-    print(f"Block names: {', '.join(str(block.get('type')) for block in blocks)}")
-    print(f"Normalized rows: {len(rows)}")
+    for input_file in input_files:
+        raw_json = load_json(input_file)
+        fallback_ingestion_timestamp = datetime.now(timezone.utc).isoformat()
+        payload, metadata = extract_metadata(raw_json, fallback_ingestion_timestamp)
+        blocks = extract_blocks(payload)
+        file_rows = normalize_blocks(blocks, metadata)
+        rows.extend(file_rows)
+
+        print(f"Input file: {input_file}")
+        print(f"Top-level keys: {', '.join(raw_json.keys())}")
+        print(f"Source: {metadata['source']}")
+        print(f"Endpoint: {metadata['endpoint']}")
+        print(f"Region: {metadata['region_slug']}")
+        print(f"Main blocks found: {len(blocks)}")
+        print(f"Block names: {', '.join(str(block.get('type')) for block in blocks)}")
+        print(f"Normalized rows from file: {len(file_rows)}")
+
+    print(f"Total normalized rows: {len(rows)}")
 
     if rows:
         print("Example normalized row:")

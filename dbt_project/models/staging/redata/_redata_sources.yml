@@ -7,4 +7,4 @@ sources:
     schema: "{{ env_var('BIGQUERY_DATASET_RAW') }}"
     tables:
       - name: redata_balance_electrico
-        description: "Raw electric balance data loaded from REData."
+        description: "Raw regional electric balance data loaded from REData."

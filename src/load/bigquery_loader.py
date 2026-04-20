@@ -11,6 +11,9 @@ from src.config.settings import BIGQUERY_DATASET_RAW, GCP_PROJECT_ID
 REDATA_BALANCE_SCHEMA = [
     bigquery.SchemaField("source", "STRING"),
     bigquery.SchemaField("endpoint", "STRING"),
+    bigquery.SchemaField("region_slug", "STRING"),
+    bigquery.SchemaField("region_name", "STRING"),
+    bigquery.SchemaField("redata_geo_id", "INT64"),
     bigquery.SchemaField("ingestion_timestamp", "TIMESTAMP"),
     bigquery.SchemaField("group_type", "STRING"),
     bigquery.SchemaField("group_id", "STRING"),
@@ -30,12 +33,16 @@ REDATA_BALANCE_SCHEMA = [
     bigquery.SchemaField("percentage", "FLOAT64"),
 ]
 
-OPENMETEO_MADRID_MONTHLY_SCHEMA = [
+OPENMETEO_MONTHLY_SCHEMA = [
     bigquery.SchemaField("source", "STRING"),
+    bigquery.SchemaField("ingestion_timestamp", "TIMESTAMP"),
+    bigquery.SchemaField("region_slug", "STRING"),
+    bigquery.SchemaField("region_name", "STRING"),
     bigquery.SchemaField("location_name", "STRING"),
     bigquery.SchemaField("latitude", "FLOAT64"),
     bigquery.SchemaField("longitude", "FLOAT64"),
     bigquery.SchemaField("timezone", "STRING"),
+    bigquery.SchemaField("weather_point_type", "STRING"),
     bigquery.SchemaField("year_month", "STRING"),
     bigquery.SchemaField("temperature_2m_max_avg", "FLOAT64"),
     bigquery.SchemaField("temperature_2m_mean_avg", "FLOAT64"),
@@ -73,7 +80,7 @@ def load_csv_to_bigquery(
     csv_path: Path,
     table_name: str,
     schema: list[bigquery.SchemaField],
-    write_disposition: str = bigquery.WriteDisposition.WRITE_TRUNCATE,
+    write_disposition: str = bigquery.WriteDisposition.WRITE_APPEND,
 ) -> str:
     """Load a local CSV file into a BigQuery table."""
     if not BIGQUERY_DATASET_RAW:
@@ -90,6 +97,7 @@ def load_csv_to_bigquery(
         source_format=bigquery.SourceFormat.CSV,
         skip_leading_rows=1,
         write_disposition=write_disposition,
+        schema_update_options=[bigquery.SchemaUpdateOption.ALLOW_FIELD_ADDITION],
     )
 
     try:

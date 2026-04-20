@@ -1,5 +1,7 @@
 with redata_monthly as (
     select
+        region_slug,
+        region_name,
         year_month,
         group_type,
         metric_type,
@@ -10,6 +12,8 @@ with redata_monthly as (
 
 openmeteo_monthly as (
     select
+        region_slug,
+        region_name,
         year_month,
         temperature_2m_max_avg,
         temperature_2m_mean_avg,
@@ -17,10 +21,12 @@ openmeteo_monthly as (
         precipitation_sum_total,
         wind_speed_10m_max_avg,
         shortwave_radiation_sum_total
-    from {{ ref('stg_openmeteo_madrid_monthly') }}
+    from {{ ref('stg_openmeteo_monthly') }}
 )
 
 select
+    redata.region_slug,
+    redata.region_name,
     redata.year_month,
     redata.group_type,
     redata.metric_type,
@@ -34,4 +40,5 @@ select
     weather.shortwave_radiation_sum_total
 from redata_monthly as redata
 left join openmeteo_monthly as weather
-    on redata.year_month = weather.year_month
+    on redata.region_slug = weather.region_slug
+    and redata.year_month = weather.year_month

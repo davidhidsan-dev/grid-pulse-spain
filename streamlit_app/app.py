@@ -1,4 +1,4 @@
-"""Small Streamlit app to explore monthly energy and weather data for Madrid."""
+"""Small Streamlit app to explore monthly regional energy and weather data."""
 
 import sys
 from pathlib import Path
@@ -14,7 +14,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.config.settings import BIGQUERY_DATASET_ANALYTICS, GCP_PROJECT_ID
 from src.load.bigquery_loader import get_bigquery_client
 
-TABLE_NAME = "mart_madrid_energy_weather_monthly"
+TABLE_NAME = "mart_energy_weather_monthly"
 
 
 @st.cache_data(ttl=3600)
@@ -88,12 +88,12 @@ def render_kpis(dataframe: pd.DataFrame) -> None:
 
 
 def main() -> None:
-    st.set_page_config(page_title="Madrid Energy + Weather", layout="wide")
+    st.set_page_config(page_title="Regional Energy + Weather", layout="wide")
 
-    st.title("Madrid Energy + Weather")
+    st.title("Regional Energy + Weather")
     st.write(
         "Primera version de la app para explorar la relacion entre el balance electrico "
-        "regional de Madrid y el clima mensual de Open-Meteo."
+        "regional y el clima mensual de Open-Meteo."
     )
 
     try:

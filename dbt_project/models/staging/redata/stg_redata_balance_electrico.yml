@@ -2,10 +2,14 @@ version: 2
 
 models:
   - name: stg_redata_balance_electrico
-    description: "Staging model for the REData electric balance raw table."
+    description: "Staging model for the REData electric balance raw table across regions."
     columns:
+      - name: region_slug
+        description: "Region identifier used across extraction and downstream joins."
+        tests:
+          - not_null
       - name: year_month
-        description: "Monthly grain used for the Madrid regional balance."
+        description: "Monthly grain used for the regional balance."
         tests:
           - not_null
       - name: datetime

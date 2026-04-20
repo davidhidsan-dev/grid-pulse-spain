@@ -1,7 +1,9 @@
-"""Load the normalized Open-Meteo Madrid CSV into a BigQuery raw table."""
+"""Load the normalized Open-Meteo monthly CSV into a BigQuery raw table."""
 
 import sys
 from pathlib import Path
+
+from google.cloud import bigquery
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -9,13 +11,13 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.config.settings import BIGQUERY_DATASET_RAW, GCP_PROJECT_ID
 from src.load.bigquery_loader import (
-    OPENMETEO_MADRID_MONTHLY_SCHEMA,
+    OPENMETEO_MONTHLY_SCHEMA,
     get_bigquery_client,
     load_csv_to_bigquery,
 )
 
-CSV_PATH = PROJECT_ROOT / "data" / "processed" / "openmeteo" / "openmeteo_madrid_monthly_normalized.csv"
-TABLE_NAME = "openmeteo_madrid_monthly"
+CSV_PATH = PROJECT_ROOT / "data" / "processed" / "openmeteo" / "openmeteo_monthly_normalized.csv"
+TABLE_NAME = "openmeteo_monthly"
 
 
 def main() -> None:
@@ -23,7 +25,8 @@ def main() -> None:
     table_id = load_csv_to_bigquery(
         csv_path=CSV_PATH,
         table_name=TABLE_NAME,
-        schema=OPENMETEO_MADRID_MONTHLY_SCHEMA,
+        schema=OPENMETEO_MONTHLY_SCHEMA,
+        write_disposition=bigquery.WriteDisposition.WRITE_APPEND,
     )
 
     client = get_bigquery_client()

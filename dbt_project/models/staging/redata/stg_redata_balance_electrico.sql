@@ -1,11 +1,23 @@
 with raw_redata_balance_electrico as (
     select *
     from {{ source('redata_raw', 'redata_balance_electrico') }}
+),
+
+deduplicated_redata_balance_electrico as (
+    select *
+    from raw_redata_balance_electrico
+    qualify row_number() over (
+        partition by coalesce(region_slug, 'madrid'), metric_id, datetime
+        order by ingestion_timestamp desc
+    ) = 1
 )
 
 select
     cast(raw.source as string) as source,
     cast(raw.endpoint as string) as endpoint,
+    cast(coalesce(raw.region_slug, 'madrid') as string) as region_slug,
+    cast(coalesce(raw.region_name, 'Comunidad de Madrid') as string) as region_name,
+    cast(coalesce(raw.redata_geo_id, 13) as int64) as redata_geo_id,
     cast(raw.ingestion_timestamp as timestamp) as ingestion_timestamp,
     cast(raw.group_type as string) as group_type,
     cast(raw.group_id as string) as group_id,
@@ -23,4 +35,4 @@ select
     cast(raw.datetime as timestamp) as datetime,
     cast(raw.value as float64) as value,
     cast(raw.percentage as float64) as percentage
-from raw_redata_balance_electrico as raw
+from deduplicated_redata_balance_electrico as raw
