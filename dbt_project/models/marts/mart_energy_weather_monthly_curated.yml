@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: mart_energy_weather_monthly_curated
+    description: "Curated monthly energy and weather table for Streamlit visualizations."
+    columns:
+      - name: region_slug
+        description: "Region identifier used in the curated visualization table."
+        tests:
+          - not_null
+      - name: year_month
+        description: "Monthly grain shared by the energy and weather metrics."
+        tests:
+          - not_null
+      - name: metric_type
+        description: "Filtered energy metric kept for the visualization layer."
+        tests:
+          - not_null
+      - name: value
+        description: "Monthly energy value for the selected metric."
+        tests:
+          - not_null
