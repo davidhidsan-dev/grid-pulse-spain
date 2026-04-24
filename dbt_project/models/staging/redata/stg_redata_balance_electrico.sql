@@ -7,7 +7,7 @@ deduplicated_redata_balance_electrico as (
     select *
     from raw_redata_balance_electrico
     qualify row_number() over (
-        partition by coalesce(region_slug, 'madrid'), metric_id, datetime
+        partition by region_slug, metric_id, datetime
         order by ingestion_timestamp desc
     ) = 1
 )
@@ -15,9 +15,9 @@ deduplicated_redata_balance_electrico as (
 select
     cast(raw.source as string) as source,
     cast(raw.endpoint as string) as endpoint,
-    cast(coalesce(raw.region_slug, 'madrid') as string) as region_slug,
-    cast(coalesce(raw.region_name, 'Comunidad de Madrid') as string) as region_name,
-    cast(coalesce(raw.redata_geo_id, 13) as int64) as redata_geo_id,
+    cast(raw.region_slug as string) as region_slug,
+    cast(raw.region_name as string) as region_name,
+    cast(raw.redata_geo_id as int64) as redata_geo_id,
     cast(raw.ingestion_timestamp as timestamp) as ingestion_timestamp,
     cast(raw.group_type as string) as group_type,
     cast(raw.group_id as string) as group_id,

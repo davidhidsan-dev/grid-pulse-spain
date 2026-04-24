@@ -3,31 +3,32 @@
 MESSAGES = {
     "es": {
         "language_title": "Selecciona el idioma / Select language:",
-        "language_option_es": "1. Espanol",
+        "language_option_es": "1. Español",
         "language_option_en": "2. English",
         "language_example": "Ejemplo: 1",
         "language_prompt": "Idioma: ",
-        "language_invalid": "Seleccion no valida. Escribe 1, 2, es o en.",
-        "year_title": "Selecciona el rango de anos a extraer.",
+        "language_invalid": "Selección no válida. Escribe 1, 2, es o en.",
+        "year_title": "Selecciona el rango de años a extraer.",
         "year_defaults": "Pulsa Enter para usar los valores por defecto: {start}-{end}",
-        "year_single": "Si quieres solo un ano, escribe el mismo ano en inicio y fin.",
+        "year_single": "Si quieres solo un año, escribe el mismo año en inicio y fin.",
         "year_example": "Ejemplo: 2020 y 2020",
-        "year_start_prompt": "Ano inicial [{default}]: ",
-        "year_end_prompt": "Ano final [{default}]: ",
-        "year_invalid_order": "El ano inicial no puede ser mayor que el ano final.",
-        "regions_title": "Selecciona una o varias comunidades autonomas:",
-        "regions_help": "Escribe numeros separados por comas o escribe 'all' para todas.",
+        "year_start_prompt": "Año inicial [{default}]: ",
+        "year_end_prompt": "Año final [{default}]: ",
+        "year_invalid_number": "Entrada no válida. Escribe un año con 4 dígitos o pulsa Enter.",
+        "year_invalid_order": "El año inicial no puede ser mayor que el año final.",
+        "regions_title": "Selecciona una o varias comunidades autónomas:",
+        "regions_help": "Escribe números separados por comas o escribe 'all' para todas.",
         "regions_example": "Ejemplo: 1,3,5",
-        "regions_prompt": "Seleccion: ",
-        "regions_empty": "La seleccion no puede estar vacia. Ejemplo: 1,3,5 o all",
-        "regions_invalid": "Formato no valido. Usa numeros separados por comas o all.",
-        "regions_range": "Seleccion fuera de rango. Elige numeros entre 1 y {count}.",
+        "regions_prompt": "Selección: ",
+        "regions_empty": "La selección no puede estar vacía. Ejemplo: 1,3,5 o all",
+        "regions_invalid": "Formato no válido. Usa números separados por comas o all.",
+        "regions_range": "Selección fuera de rango. Elige números entre 1 y {count}.",
         "saved_redata": "Respuesta de REData guardada en {path}",
         "saved_openmeteo": "Respuesta de Open-Meteo guardada en {path}",
     },
     "en": {
         "language_title": "Select language / Selecciona el idioma:",
-        "language_option_es": "1. Espanol",
+        "language_option_es": "1. Español",
         "language_option_en": "2. English",
         "language_example": "Example: 2",
         "language_prompt": "Language: ",
@@ -38,6 +39,7 @@ MESSAGES = {
         "year_example": "Example: 2020 and 2020",
         "year_start_prompt": "Start year [{default}]: ",
         "year_end_prompt": "End year [{default}]: ",
+        "year_invalid_number": "Invalid input. Type a 4-digit year or press Enter.",
         "year_invalid_order": "Start year cannot be greater than end year.",
         "regions_title": "Select one or more autonomous communities:",
         "regions_help": "Type numbers separated by commas or type 'all' for all of them.",
@@ -67,7 +69,7 @@ def prompt_for_language() -> str:
         print(translate("es", "language_example"))
 
         raw_language = input(translate("es", "language_prompt")).strip().lower()
-        if raw_language in {"1", "es", "esp", "espanol"}:
+        if raw_language in {"1", "es", "esp", "espanol", "español"}:
             return "es"
         if raw_language in {"2", "en", "eng", "english"}:
             return "en"
@@ -80,30 +82,36 @@ def prompt_for_year_range(
     language: str, default_start_year: int, default_end_year: int
 ) -> tuple[int, int]:
     """Ask for a start and end year, allowing a single-year range."""
-    print()
-    print(translate(language, "year_title"))
-    print(
-        translate(
-            language,
-            "year_defaults",
-            start=default_start_year,
-            end=default_end_year,
+    while True:
+        print()
+        print(translate(language, "year_title"))
+        print(
+            translate(
+                language,
+                "year_defaults",
+                start=default_start_year,
+                end=default_end_year,
+            )
         )
-    )
-    print(translate(language, "year_single"))
-    print(translate(language, "year_example"))
+        print(translate(language, "year_single"))
+        print(translate(language, "year_example"))
 
-    start_raw = input(
-        translate(language, "year_start_prompt", default=default_start_year)
-    ).strip()
-    end_raw = input(
-        translate(language, "year_end_prompt", default=default_end_year)
-    ).strip()
+        start_raw = input(
+            translate(language, "year_start_prompt", default=default_start_year)
+        ).strip()
+        end_raw = input(
+            translate(language, "year_end_prompt", default=default_end_year)
+        ).strip()
 
-    start_year = int(start_raw) if start_raw else default_start_year
-    end_year = int(end_raw) if end_raw else default_end_year
+        try:
+            start_year = int(start_raw) if start_raw else default_start_year
+            end_year = int(end_raw) if end_raw else default_end_year
+        except ValueError:
+            print(translate(language, "year_invalid_number"))
+            continue
 
-    if start_year > end_year:
-        raise ValueError(translate(language, "year_invalid_order"))
+        if start_year > end_year:
+            print(translate(language, "year_invalid_order"))
+            continue
 
-    return start_year, end_year
+        return start_year, end_year

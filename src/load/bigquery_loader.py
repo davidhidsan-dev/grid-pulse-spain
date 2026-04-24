@@ -108,3 +108,36 @@ def load_csv_to_bigquery(
         raise RuntimeError(f"BigQuery load failed for {table_id}: {error}") from error
 
     return table_id
+
+
+def deduplicate_bigquery_table(
+    table_id: str,
+    unique_key_columns: list[str],
+    order_by_column: str = "ingestion_timestamp",
+) -> None:
+    """Rewrite a BigQuery table keeping only the latest row per natural key."""
+    if not unique_key_columns:
+        raise ValueError("At least one unique key column is required.")
+
+    client = get_bigquery_client()
+    partition_columns = ", ".join(f"`{column_name}`" for column_name in unique_key_columns)
+    query = f"""
+        create or replace table `{table_id}` as
+        select * except(row_number)
+        from (
+            select
+                *,
+                row_number() over (
+                    partition by {partition_columns}
+                    order by `{order_by_column}` desc
+                ) as row_number
+            from `{table_id}`
+        )
+        where row_number = 1
+    """
+
+    try:
+        job = client.query(query)
+        job.result()
+    except GoogleAPIError as error:
+        raise RuntimeError(f"BigQuery deduplication failed for {table_id}: {error}") from error

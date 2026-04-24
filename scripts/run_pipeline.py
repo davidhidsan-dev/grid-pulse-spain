@@ -52,10 +52,10 @@ def main() -> None:
     ]
 
     run_python_script("run_ingestion.py", extraction_args)
-    run_python_script("run_openmeteo_madrid.py", extraction_args)
+    run_python_script("run_openmeteo.py", extraction_args)
     run_python_script("inspect_redata_json.py", ["--regions", ",".join(selected_region_slugs)])
-    run_python_script("normalize_openmeteo_madrid.py", ["--regions", ",".join(selected_region_slugs)])
-    run_python_script("aggregate_openmeteo_madrid_monthly.py")
+    run_python_script("normalize_openmeteo.py", ["--regions", ",".join(selected_region_slugs)])
+    run_python_script("aggregate_openmeteo_monthly.py")
     run_python_script("load_redata_to_bigquery.py")
     run_python_script("load_openmeteo_to_bigquery.py")
     run_python_script("run_dbt.py")

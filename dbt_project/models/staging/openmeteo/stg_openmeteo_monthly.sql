@@ -7,7 +7,7 @@ deduplicated_openmeteo_monthly as (
     select *
     from raw_openmeteo_monthly
     qualify row_number() over (
-        partition by coalesce(region_slug, 'madrid'), year_month
+        partition by region_slug, year_month
         order by ingestion_timestamp desc
     ) = 1
 )
@@ -15,8 +15,8 @@ deduplicated_openmeteo_monthly as (
 select
     cast(raw.source as string) as source,
     cast(raw.ingestion_timestamp as timestamp) as ingestion_timestamp,
-    cast(coalesce(raw.region_slug, 'madrid') as string) as region_slug,
-    cast(coalesce(raw.region_name, 'Comunidad de Madrid') as string) as region_name,
+    cast(raw.region_slug as string) as region_slug,
+    cast(raw.region_name as string) as region_name,
     cast(raw.location_name as string) as location_name,
     cast(raw.latitude as float64) as latitude,
     cast(raw.longitude as float64) as longitude,

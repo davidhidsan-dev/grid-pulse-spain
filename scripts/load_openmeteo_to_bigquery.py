@@ -12,6 +12,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.config.settings import BIGQUERY_DATASET_RAW, GCP_PROJECT_ID
 from src.load.bigquery_loader import (
     OPENMETEO_MONTHLY_SCHEMA,
+    deduplicate_bigquery_table,
     get_bigquery_client,
     load_csv_to_bigquery,
 )
@@ -21,12 +22,16 @@ TABLE_NAME = "openmeteo_monthly"
 
 
 def main() -> None:
-    """Load the normalized monthly Open-Meteo CSV into the raw BigQuery dataset."""
+    """Append normalized monthly Open-Meteo rows to BigQuery and remove duplicates."""
     table_id = load_csv_to_bigquery(
         csv_path=CSV_PATH,
         table_name=TABLE_NAME,
         schema=OPENMETEO_MONTHLY_SCHEMA,
         write_disposition=bigquery.WriteDisposition.WRITE_APPEND,
+    )
+    deduplicate_bigquery_table(
+        table_id=table_id,
+        unique_key_columns=["region_slug", "year_month"],
     )
 
     client = get_bigquery_client()
@@ -36,7 +41,7 @@ def main() -> None:
     print(f"Project: {GCP_PROJECT_ID}")
     print(f"Dataset: {BIGQUERY_DATASET_RAW}")
     print(f"Table: {table_id}")
-    print(f"Rows loaded: {table.num_rows}")
+    print(f"Rows after deduplication: {table.num_rows}")
 
 
 if __name__ == "__main__":

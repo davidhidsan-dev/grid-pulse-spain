@@ -56,7 +56,11 @@ def resolve_input_files(file_name: str | None, region_slugs: list[str] | None) -
             input_files.append(input_file)
         return input_files
 
-    return [resolve_input_file(None)]
+    input_folder = ensure_folder(RE_DATA_RAW_PATH)
+    json_files = sorted(input_folder.glob("*.json"), key=lambda path: path.stat().st_mtime, reverse=True)
+    if not json_files:
+        raise FileNotFoundError(f"No JSON files found in: {input_folder}")
+    return json_files
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -152,8 +156,6 @@ def normalize_blocks(
                         "last_update": record_attributes.get("last-update"),
                         "total": record_attributes.get("total"),
                         "total_percentage": record_attributes.get("total-percentage"),
-                        # Madrid regional balance is handled monthly because the
-                        # practical REData regional series is not usable daily.
                         "year_month": str(value_item.get("datetime", ""))[:7],
                         "datetime": value_item.get("datetime"),
                         "value": value_item.get("value"),
