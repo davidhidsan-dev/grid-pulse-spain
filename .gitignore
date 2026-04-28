@@ -203,6 +203,12 @@ cython_debug/
 
 # Project data
 data/
+!data/
+data/raw/
+data/processed/
+!data/reference/
+data/reference/*
+!data/reference/spanish_regions.csv
 
 # dbt local artifacts
 dbt_project/.user.yml

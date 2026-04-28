@@ -1,0 +1,20 @@
+region_slug,display_name,region_type,redata_geo_limit,redata_geo_id,weather_location_name,latitude,longitude,timezone,weather_point_type,is_active
+andalucia,Andalucía,community,ccaa,4,Sevilla,37.3886,-5.9823,Europe/Madrid,regional_capital,true
+aragon,Aragón,community,ccaa,5,Zaragoza,41.6488,-0.8891,Europe/Madrid,regional_capital,true
+asturias,Principado de Asturias,community,ccaa,11,Oviedo,43.3619,-5.8494,Europe/Madrid,regional_capital,true
+baleares,Illes Balears,community,ccaa,8743,Palma,39.5696,2.6502,Europe/Madrid,regional_capital,true
+canarias,Canarias,community,ccaa,8742,Santa Cruz de Tenerife,28.4636,-16.2518,Atlantic/Canary,regional_capital,true
+cantabria,Cantabria,community,ccaa,6,Santander,43.4623,-3.8100,Europe/Madrid,regional_capital,true
+castilla_la_mancha,Castilla-La Mancha,community,ccaa,7,Toledo,39.8628,-4.0273,Europe/Madrid,regional_capital,true
+castilla_y_leon,Castilla y León,community,ccaa,8,Valladolid,41.6523,-4.7245,Europe/Madrid,regional_capital,true
+cataluna,Cataluña,community,ccaa,9,Barcelona,41.3874,2.1686,Europe/Madrid,regional_capital,true
+ceuta,Ceuta,autonomous_city,ccaa,8744,Ceuta,35.8894,-5.3213,Africa/Ceuta,regional_capital,true
+comunidad_valenciana,Comunitat Valenciana,community,ccaa,15,Valencia,39.4699,-0.3763,Europe/Madrid,regional_capital,true
+extremadura,Extremadura,community,ccaa,16,Mérida,38.9175,-6.3444,Europe/Madrid,regional_capital,true
+galicia,Galicia,community,ccaa,17,Santiago de Compostela,42.8782,-8.5448,Europe/Madrid,regional_capital,true
+la_rioja,La Rioja,community,ccaa,20,Logroño,42.4627,-2.4450,Europe/Madrid,regional_capital,true
+madrid,Comunidad de Madrid,community,ccaa,13,Madrid,40.4168,-3.7038,Europe/Madrid,regional_capital,true
+melilla,Melilla,autonomous_city,ccaa,8745,Melilla,35.2923,-2.9381,Africa/Ceuta,regional_capital,true
+murcia,Región de Murcia,community,ccaa,21,Murcia,37.9922,-1.1307,Europe/Madrid,regional_capital,true
+navarra,Comunidad Foral de Navarra,community,ccaa,14,Pamplona,42.8125,-1.6458,Europe/Madrid,regional_capital,true
+pais_vasco,País Vasco,community,ccaa,10,Vitoria-Gasteiz,42.8467,-2.6726,Europe/Madrid,regional_capital,true
