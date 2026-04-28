@@ -18,6 +18,7 @@ class TestOpenMeteoClient(unittest.TestCase):
 
     @patch("src.extract.weather.client.requests.get")
     def test_fetch_daily_history_returns_parsed_json(self, mock_get: Mock) -> None:
+        """Return parsed JSON when the Open-Meteo request succeeds."""
         expected_payload = {
             "latitude": 40.4,
             "longitude": -3.7,
@@ -54,6 +55,7 @@ class TestOpenMeteoClient(unittest.TestCase):
 
     @patch("src.extract.weather.client.requests.get")
     def test_fetch_daily_history_validates_daily_variables(self, mock_get: Mock) -> None:
+        """Reject requests that do not include any daily variables."""
         with self.assertRaises(ValueError):
             self.client.fetch_daily_history(
                 latitude=40.4168,
@@ -68,6 +70,7 @@ class TestOpenMeteoClient(unittest.TestCase):
 
     @patch("src.extract.weather.client.requests.get")
     def test_fetch_daily_history_raises_http_errors(self, mock_get: Mock) -> None:
+        """Propagate request errors raised by the underlying HTTP client."""
         mock_get.side_effect = requests.RequestException("network error")
 
         with self.assertRaises(requests.RequestException):

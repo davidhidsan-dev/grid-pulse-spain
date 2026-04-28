@@ -1,22 +1,16 @@
-"""Normalize one or more raw REData balance JSON files into a flat monthly table."""
+"""Reusable REData normalization helpers."""
 
-import argparse
 import json
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
 from src.config.settings import RE_DATA_PROCESSED_PATH, RE_DATA_RAW_PATH
 from src.extract.redata.client import REDataClient
 
-OUTPUT_FILE_NAME = "redata_balance_electrico_monthly_normalized.csv"
+REDATA_OUTPUT_FILE_NAME = "redata_balance_electrico_monthly_normalized.csv"
 
 
 def ensure_folder(path: Path) -> Path:
@@ -35,7 +29,11 @@ def resolve_input_file(file_name: str | None) -> Path:
             raise FileNotFoundError(f"JSON file not found: {input_file}")
         return input_file
 
-    json_files = sorted(input_folder.glob("*.json"), key=lambda path: path.stat().st_mtime, reverse=True)
+    json_files = sorted(
+        input_folder.glob("*.json"),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
     if not json_files:
         raise FileNotFoundError(f"No JSON files found in: {input_folder}")
     return json_files[0]
@@ -56,8 +54,11 @@ def resolve_input_files(file_name: str | None, region_slugs: list[str] | None) -
             input_files.append(input_file)
         return input_files
 
-    input_folder = ensure_folder(RE_DATA_RAW_PATH)
-    json_files = sorted(input_folder.glob("*.json"), key=lambda path: path.stat().st_mtime, reverse=True)
+    json_files = sorted(
+        input_folder.glob("*.json"),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
     if not json_files:
         raise FileNotFoundError(f"No JSON files found in: {input_folder}")
     return json_files
@@ -169,52 +170,12 @@ def normalize_blocks(
 def save_normalized_csv(rows: list[dict[str, Any]]) -> Path:
     """Write the normalized rows to the processed REData folder."""
     output_folder = ensure_folder(RE_DATA_PROCESSED_PATH)
-    output_file = output_folder / OUTPUT_FILE_NAME
+    output_file = output_folder / REDATA_OUTPUT_FILE_NAME
     dataframe = pd.DataFrame(rows)
     dataframe.to_csv(output_file, index=False)
     return output_file
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Normalize a raw monthly REData balance JSON file.")
-    parser.add_argument("--file", help="JSON file name inside data/raw/redata/")
-    parser.add_argument("--regions", help="Comma-separated region slugs, for example: madrid,asturias")
-    args = parser.parse_args()
-
-    region_slugs = (
-        [item.strip().lower() for item in args.regions.split(",") if item.strip()]
-        if args.regions
-        else None
-    )
-    input_files = resolve_input_files(args.file, region_slugs)
-    rows: list[dict[str, Any]] = []
-
-    for input_file in input_files:
-        raw_json = load_json(input_file)
-        fallback_ingestion_timestamp = datetime.now(timezone.utc).isoformat()
-        payload, metadata = extract_metadata(raw_json, fallback_ingestion_timestamp)
-        blocks = extract_blocks(payload)
-        file_rows = normalize_blocks(blocks, metadata)
-        rows.extend(file_rows)
-
-        print(f"Input file: {input_file}")
-        print(f"Top-level keys: {', '.join(raw_json.keys())}")
-        print(f"Source: {metadata['source']}")
-        print(f"Endpoint: {metadata['endpoint']}")
-        print(f"Region: {metadata['region_slug']}")
-        print(f"Main blocks found: {len(blocks)}")
-        print(f"Block names: {', '.join(str(block.get('type')) for block in blocks)}")
-        print(f"Normalized rows from file: {len(file_rows)}")
-
-    print(f"Total normalized rows: {len(rows)}")
-
-    if rows:
-        print("Example normalized row:")
-        print(json.dumps(rows[0], indent=2, ensure_ascii=False))
-
-    output_file = save_normalized_csv(rows)
-    print(f"Saved normalized CSV to: {output_file}")
-
-
-if __name__ == "__main__":
-    main()
+def build_fallback_ingestion_timestamp() -> str:
+    """Build a UTC timestamp for rows that do not carry extraction metadata."""
+    return datetime.now(timezone.utc).isoformat()
