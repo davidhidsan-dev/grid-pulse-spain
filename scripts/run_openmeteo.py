@@ -12,6 +12,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.config.regions import load_regions, prompt_for_regions, resolve_regions_by_slugs
 from src.extract.weather.client import OpenMeteoClient
+from src.utils.logger import get_logger
 from src.utils.terminal_ui import prompt_for_language, prompt_for_year_range, translate
 
 OPENMETEO_RAW_PATH = PROJECT_ROOT / "data" / "raw" / "openmeteo"
@@ -27,6 +28,7 @@ DAILY_VARIABLES = [
     "wind_speed_10m_max",
     "shortwave_radiation_sum",
 ]
+logger = get_logger(__name__)
 
 
 def ensure_data_folder(path: Path) -> Path:
@@ -75,9 +77,16 @@ def main() -> None:
 
     start_date = f"{start_year}-01-01"
     end_date = f"{end_year}-12-31"
+    logger.info(
+        "Starting Open-Meteo extraction for %s region(s) between %s and %s",
+        len(selected_regions),
+        start_date,
+        end_date,
+    )
 
     for region in selected_regions:
         # We keep daily weather data, then aggregate it monthly to match REData.
+        logger.info("Fetching Open-Meteo payload for region %s", region.region_slug)
         payload = client.fetch_daily_history(
             latitude=region.latitude,
             longitude=region.longitude,
@@ -104,6 +113,11 @@ def main() -> None:
         with output_file.open("w", encoding="utf-8") as handler:
             json.dump(raw_response, handler, indent=2, ensure_ascii=False)
 
+        logger.info(
+            "Saved Open-Meteo raw response for region %s to %s",
+            region.region_slug,
+            output_file,
+        )
         print(translate(language, "saved_openmeteo", path=output_file))
 
 

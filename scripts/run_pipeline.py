@@ -72,6 +72,13 @@ def main() -> None:
         raise ValueError("Use both --start-year and --end-year together.")
 
     selected_region_slugs = [region.region_slug for region in selected_regions]
+    logger.info(
+        "Starting pipeline for regions=%s years=%s-%s language=%s",
+        ",".join(selected_region_slugs),
+        start_year,
+        end_year,
+        language,
+    )
     extraction_args = [
         "--language",
         language,
@@ -92,6 +99,7 @@ def main() -> None:
     run_python_script("load_openmeteo_to_bigquery.py")
     run_python_script("run_dbt.py")
 
+    logger.info("Pipeline completed successfully")
     print()
     print("Pipeline completed successfully.")
 

@@ -14,11 +14,13 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.config.regions import load_regions, prompt_for_regions, resolve_regions_by_slugs
 from src.config.settings import RE_DATA_RAW_PATH
 from src.extract.redata.client import REDataClient
+from src.utils.logger import get_logger
 from src.utils.terminal_ui import prompt_for_language, prompt_for_year_range, translate
 
 REGION_TIME_TRUNC = "month"
 DEFAULT_START_YEAR = 2015
 DEFAULT_END_YEAR = 2025
+logger = get_logger(__name__)
 
 
 def ensure_data_folder(path: Path) -> Path:
@@ -130,8 +132,15 @@ def main() -> None:
 
     start_date = f"{start_year}-01-01T00:00"
     end_date = f"{end_year}-12-31T23:59"
+    logger.info(
+        "Starting REData extraction for %s region(s) between %s and %s",
+        len(selected_regions),
+        start_date,
+        end_date,
+    )
 
     for region in selected_regions:
+        logger.info("Fetching REData payload for region %s", region.region_slug)
         payload: dict | None = None
         requested_years: list[int] = []
 
@@ -169,6 +178,11 @@ def main() -> None:
         with output_file.open("w", encoding="utf-8") as handler:
             json.dump(raw_response, handler, indent=2, ensure_ascii=False)
 
+        logger.info(
+            "Saved REData raw response for region %s to %s",
+            region.region_slug,
+            output_file,
+        )
         print(translate(language, "saved_redata", path=output_file))
 
 

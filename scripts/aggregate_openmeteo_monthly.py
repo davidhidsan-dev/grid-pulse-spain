@@ -9,9 +9,12 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from src.utils.logger import get_logger
+
 INPUT_FILE = PROJECT_ROOT / "data" / "processed" / "openmeteo" / "openmeteo_daily_normalized.csv"
 OUTPUT_FOLDER = PROJECT_ROOT / "data" / "processed" / "openmeteo"
 OUTPUT_FILE_NAME = "openmeteo_monthly_normalized.csv"
+logger = get_logger(__name__)
 
 
 def ensure_folder(path: Path) -> Path:
@@ -85,9 +88,9 @@ def main() -> None:
     output_file = output_folder / OUTPUT_FILE_NAME
     monthly.to_csv(output_file, index=False)
 
-    print(f"Input file: {INPUT_FILE}")
-    print(f"Monthly rows: {len(monthly)}")
-    print(f"Saved monthly CSV to: {output_file}")
+    logger.info("Input file: %s", INPUT_FILE)
+    logger.info("Monthly rows: %s", len(monthly))
+    logger.info("Saved monthly CSV to: %s", output_file)
 
 
 if __name__ == "__main__":

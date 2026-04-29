@@ -16,9 +16,11 @@ from src.load.bigquery_loader import (
     get_bigquery_client,
     load_csv_to_bigquery,
 )
+from src.utils.logger import get_logger
 
 CSV_FILE_NAME = "redata_balance_electrico_monthly_normalized.csv"
 TABLE_NAME = "redata_balance_electrico"
+logger = get_logger(__name__)
 
 
 def main() -> None:
@@ -38,11 +40,11 @@ def main() -> None:
     client = get_bigquery_client()
     table = client.get_table(table_id)
 
-    print(f"CSV file: {csv_path}")
-    print(f"Project: {GCP_PROJECT_ID}")
-    print(f"Dataset: {BIGQUERY_DATASET_RAW}")
-    print(f"Table: {table_id}")
-    print(f"Rows after deduplication: {table.num_rows}")
+    logger.info("CSV file: %s", csv_path)
+    logger.info("Project: %s", GCP_PROJECT_ID)
+    logger.info("Dataset: %s", BIGQUERY_DATASET_RAW)
+    logger.info("Table: %s", table_id)
+    logger.info("Rows after deduplication: %s", table.num_rows)
 
 
 if __name__ == "__main__":

@@ -11,6 +11,9 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.transform.openmeteo import load_json, normalize_daily_payload, resolve_input_files, save_csv
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def main() -> None:
@@ -26,21 +29,21 @@ def main() -> None:
     )
     input_files = resolve_input_files(region_slugs)
     rows: list[dict[str, Any]] = []
+    logger.info("Normalizing %s Open-Meteo raw file(s)", len(input_files))
 
     for input_file in input_files:
         raw_json = load_json(input_file)
         file_rows = normalize_daily_payload(raw_json)
         rows.extend(file_rows)
-        print(f"Input file: {input_file}")
-        print(f"Normalized rows from file: {len(file_rows)}")
+        logger.info("Input file: %s", input_file)
+        logger.info("Normalized rows from file: %s", len(file_rows))
 
     output_file = save_csv(rows)
 
-    print(f"Normalized rows: {len(rows)}")
+    logger.info("Normalized rows: %s", len(rows))
     if rows:
-        print("Example normalized row:")
-        print(json.dumps(rows[0], indent=2, ensure_ascii=False))
-    print(f"Saved normalized CSV to: {output_file}")
+        logger.info("Example normalized row:\n%s", json.dumps(rows[0], indent=2, ensure_ascii=False))
+    logger.info("Saved normalized CSV to: %s", output_file)
 
 
 if __name__ == "__main__":

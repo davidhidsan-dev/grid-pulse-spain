@@ -19,6 +19,9 @@ from src.transform.redata import (
     resolve_input_files,
     save_normalized_csv,
 )
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def main() -> None:
@@ -34,6 +37,7 @@ def main() -> None:
     )
     input_files = resolve_input_files(args.file, region_slugs)
     rows: list[dict[str, Any]] = []
+    logger.info("Normalizing %s REData raw file(s)", len(input_files))
 
     for input_file in input_files:
         raw_json = load_json(input_file)
@@ -43,23 +47,22 @@ def main() -> None:
         file_rows = normalize_blocks(blocks, metadata)
         rows.extend(file_rows)
 
-        print(f"Input file: {input_file}")
-        print(f"Top-level keys: {', '.join(raw_json.keys())}")
-        print(f"Source: {metadata['source']}")
-        print(f"Endpoint: {metadata['endpoint']}")
-        print(f"Region: {metadata['region_slug']}")
-        print(f"Main blocks found: {len(blocks)}")
-        print(f"Block names: {', '.join(str(block.get('type')) for block in blocks)}")
-        print(f"Normalized rows from file: {len(file_rows)}")
+        logger.info("Input file: %s", input_file)
+        logger.info("Top-level keys: %s", ", ".join(raw_json.keys()))
+        logger.info("Source: %s", metadata["source"])
+        logger.info("Endpoint: %s", metadata["endpoint"])
+        logger.info("Region: %s", metadata["region_slug"])
+        logger.info("Main blocks found: %s", len(blocks))
+        logger.info("Block names: %s", ", ".join(str(block.get("type")) for block in blocks))
+        logger.info("Normalized rows from file: %s", len(file_rows))
 
-    print(f"Total normalized rows: {len(rows)}")
+    logger.info("Total normalized rows: %s", len(rows))
 
     if rows:
-        print("Example normalized row:")
-        print(json.dumps(rows[0], indent=2, ensure_ascii=False))
+        logger.info("Example normalized row:\n%s", json.dumps(rows[0], indent=2, ensure_ascii=False))
 
     output_file = save_normalized_csv(rows)
-    print(f"Saved normalized CSV to: {output_file}")
+    logger.info("Saved normalized CSV to: %s", output_file)
 
 
 if __name__ == "__main__":
