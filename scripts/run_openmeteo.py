@@ -1,6 +1,7 @@
 """Run a simple Open-Meteo extraction for one or more regions."""
 
 import argparse
+import copy
 import json
 import sys
 from datetime import datetime, timezone
@@ -49,6 +50,35 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def merge_openmeteo_payloads(base_payload: dict, yearly_payload: dict) -> dict:
+    """Merge one yearly Open-Meteo payload into the accumulated payload."""
+    merged_payload = copy.deepcopy(base_payload)
+
+    merged_daily = merged_payload.get("daily", {})
+    yearly_daily = yearly_payload.get("daily", {})
+    if not isinstance(merged_daily, dict) or not isinstance(yearly_daily, dict):
+        raise ValueError("Expected Open-Meteo payloads to contain a 'daily' object.")
+
+    for key, yearly_values in yearly_daily.items():
+        if not isinstance(yearly_values, list):
+            raise ValueError(
+                f"Expected Open-Meteo daily series '{key}' to be a list, got {type(yearly_values).__name__}."
+            )
+
+        merged_values = merged_daily.get(key, [])
+        if not isinstance(merged_values, list):
+            raise ValueError(
+                f"Expected accumulated Open-Meteo daily series '{key}' to be a list, "
+                f"got {type(merged_values).__name__}."
+            )
+        merged_values.extend(copy.deepcopy(yearly_values))
+
+    if "daily_units" not in merged_payload and "daily_units" in yearly_payload:
+        merged_payload["daily_units"] = copy.deepcopy(yearly_payload["daily_units"])
+
+    return merged_payload
+
+
 def main() -> None:
     """Fetch daily historical samples for the selected regions and save raw JSON."""
     args = parse_args()
@@ -87,14 +117,27 @@ def main() -> None:
     for region in selected_regions:
         # We keep daily weather data, then aggregate it monthly to match REData.
         logger.info("Fetching Open-Meteo payload for region %s", region.region_slug)
-        payload = client.fetch_daily_history(
-            latitude=region.latitude,
-            longitude=region.longitude,
-            start_date=start_date,
-            end_date=end_date,
-            timezone=region.timezone,
-            daily=DAILY_VARIABLES,
-        )
+        payload: dict | None = None
+        requested_years: list[int] = []
+
+        for year in range(start_year, end_year + 1):
+            yearly_payload = client.fetch_daily_history(
+                latitude=region.latitude,
+                longitude=region.longitude,
+                start_date=f"{year}-01-01",
+                end_date=f"{year}-12-31",
+                timezone=region.timezone,
+                daily=DAILY_VARIABLES,
+            )
+            requested_years.append(year)
+
+            if payload is None:
+                payload = yearly_payload
+            else:
+                payload = merge_openmeteo_payloads(payload, yearly_payload)
+
+        if payload is None:
+            raise RuntimeError("No Open-Meteo payload was generated for the selected year range.")
 
         raw_response = {
             "source": client.SOURCE,
@@ -105,6 +148,9 @@ def main() -> None:
             "longitude": region.longitude,
             "timezone": region.timezone,
             "weather_point_type": region.weather_point_type,
+            "requested_start_date": start_date,
+            "requested_end_date": end_date,
+            "requested_years": requested_years,
             "extracted_at": datetime.now(timezone.utc).isoformat(),
             "payload": payload,
         }

@@ -83,6 +83,42 @@ class TestOpenMeteoClient(unittest.TestCase):
                 daily=["temperature_2m_mean"],
             )
 
+    @patch("src.extract.weather.client.time.sleep")
+    @patch("src.extract.weather.client.requests.get")
+    def test_fetch_daily_history_retries_rate_limit_errors(
+        self, mock_get: Mock, mock_sleep: Mock
+    ) -> None:
+        """Retry when Open-Meteo returns a temporary 429 rate limit error."""
+        rate_limit_response = Mock()
+        rate_limit_response.status_code = 429
+
+        rate_limit_error = requests.HTTPError("rate limit")
+        rate_limit_error.response = rate_limit_response
+
+        success_response = Mock()
+        success_response.raise_for_status.return_value = None
+        success_response.json.return_value = {
+            "daily": {"time": ["2025-01-01"], "temperature_2m_mean": [8.4]}
+        }
+
+        mock_get.side_effect = [
+            Mock(raise_for_status=Mock(side_effect=rate_limit_error)),
+            success_response,
+        ]
+
+        payload = self.client.fetch_daily_history(
+            latitude=40.4168,
+            longitude=-3.7038,
+            start_date="2025-01-01",
+            end_date="2025-01-07",
+            timezone="Europe/Madrid",
+            daily=["temperature_2m_mean"],
+        )
+
+        self.assertEqual(payload["daily"]["time"], ["2025-01-01"])
+        self.assertEqual(mock_get.call_count, 2)
+        mock_sleep.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()

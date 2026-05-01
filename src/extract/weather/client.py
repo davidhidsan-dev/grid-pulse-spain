@@ -1,6 +1,7 @@
 """Small client for the Open-Meteo Historical Weather API."""
 
 import os
+import time
 from typing import Any
 
 import requests
@@ -19,21 +20,53 @@ class OpenMeteoClient:
     SOURCE = "open_meteo"
     DEFAULT_BASE_URL = "https://archive-api.open-meteo.com/v1/archive"
     DEFAULT_TIMEOUT_SECONDS = 30
+    DEFAULT_MAX_RETRIES = 3
+    DEFAULT_RETRY_DELAY_SECONDS = 2
 
-    def __init__(self, base_url: str | None = None, timeout: int | None = None):
+    def __init__(
+        self,
+        base_url: str | None = None,
+        timeout: int | None = None,
+        max_retries: int | None = None,
+        retry_delay_seconds: int | None = None,
+    ):
         self.base_url = base_url or os.getenv("OPEN_METEO_BASE_URL", self.DEFAULT_BASE_URL)
         self.timeout = timeout if timeout is not None else self.DEFAULT_TIMEOUT_SECONDS
+        self.max_retries = max_retries if max_retries is not None else self.DEFAULT_MAX_RETRIES
+        self.retry_delay_seconds = (
+            retry_delay_seconds
+            if retry_delay_seconds is not None
+            else self.DEFAULT_RETRY_DELAY_SECONDS
+        )
 
     def _get(self, params: dict[str, Any]) -> dict[str, Any]:
         """Send a GET request to Open-Meteo and return the parsed JSON body."""
         url = self.base_url
 
-        try:
-            response = requests.get(url, params=params, timeout=self.timeout)
-            response.raise_for_status()
-        except requests.RequestException as error:
-            logger.error("Open-Meteo request failed: %s", error)
-            raise
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                response = requests.get(url, params=params, timeout=self.timeout)
+                response.raise_for_status()
+                break
+            except requests.HTTPError as error:
+                status_code = error.response.status_code if error.response is not None else None
+                if status_code == 429 and attempt < self.max_retries:
+                    delay = self.retry_delay_seconds * attempt
+                    logger.warning(
+                        "Open-Meteo rate limit reached. Retrying in %s second(s) "
+                        "(attempt %s/%s).",
+                        delay,
+                        attempt,
+                        self.max_retries,
+                    )
+                    time.sleep(delay)
+                    continue
+
+                logger.error("Open-Meteo request failed: %s", error)
+                raise
+            except requests.RequestException as error:
+                logger.error("Open-Meteo request failed: %s", error)
+                raise
 
         try:
             return response.json()
