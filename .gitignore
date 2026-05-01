@@ -218,3 +218,10 @@ dbt_project/logs/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Local runtime logs
+logs/
+
+# Airflow local runtime files
+airflow/logs/
+airflow/plugins/
