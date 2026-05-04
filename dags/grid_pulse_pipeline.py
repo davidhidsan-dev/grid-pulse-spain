@@ -8,11 +8,12 @@ import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import TypedDict
 
-from airflow.decorators import dag, task, task_group
-from airflow.exceptions import AirflowException, AirflowFailException
-from airflow.models.param import Param
-from airflow.operators.python import get_current_context
+from airflow.decorators import dag, task, task_group  # pyright: ignore[reportMissingImports]
+from airflow.exceptions import AirflowException, AirflowFailException  # pyright: ignore[reportMissingImports]
+from airflow.models.param import Param  # pyright: ignore[reportMissingImports]
+from airflow.operators.python import get_current_context  # pyright: ignore[reportMissingImports]
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -47,6 +48,14 @@ NON_RETRYABLE_ERROR_MARKERS = [
 ]
 
 
+class RuntimeParams(TypedDict):
+    """Typed runtime params resolved from Airflow DAG params."""
+
+    start_year: int
+    end_year: int
+    region_slugs: list[str]
+
+
 def _resolve_region_slugs(regions_value: str) -> list[str]:
     """Resolve region selection from DAG params."""
     normalized_value = regions_value.strip().lower()
@@ -55,7 +64,7 @@ def _resolve_region_slugs(regions_value: str) -> list[str]:
     return [item.strip().lower() for item in regions_value.split(",") if item.strip()]
 
 
-def _get_runtime_params() -> dict[str, int | list[str]]:
+def _get_runtime_params() -> RuntimeParams:
     """Read and validate runtime params from the current task context."""
     context = get_current_context()
     params = context["params"]
@@ -335,11 +344,11 @@ def grid_pulse_pipeline():
         return redata_normalized, openmeteo_aggregated
 
     @task_group(group_id="load")
-    def load_group(redata_normalized_result: dict[str, str]) -> tuple[None, None]:
+    def load_group() -> tuple[None, None]:
         """BigQuery loading tasks."""
 
         @task(retries=2, retry_delay=timedelta(minutes=2), execution_timeout=timedelta(minutes=20))
-        def load_redata_to_bigquery(_: dict[str, str]) -> None:
+        def load_redata_to_bigquery() -> None:
             """Load normalized REData rows into the raw BigQuery layer."""
             _run_subprocess(
                 [PYTHON_BIN, str(SCRIPTS_DIR / "load_redata_to_bigquery.py")],
@@ -354,7 +363,7 @@ def grid_pulse_pipeline():
                 cwd=PROJECT_ROOT,
             )
 
-        return load_redata_to_bigquery(redata_normalized_result), load_openmeteo_to_bigquery()
+        return load_redata_to_bigquery(), load_openmeteo_to_bigquery()
 
     @task_group(group_id="model")
     def model_group() -> tuple[None, None, None]:
@@ -398,9 +407,10 @@ def grid_pulse_pipeline():
     redata_normalized_result, openmeteo_aggregated_result = transform_group(
         redata_extract_result, openmeteo_extract_result
     )
-    redata_loaded, openmeteo_loaded = load_group(redata_normalized_result)
+    redata_loaded, openmeteo_loaded = load_group()
     staging, marts, tests = model_group()
 
+    redata_normalized_result >> redata_loaded
     openmeteo_aggregated_result >> openmeteo_loaded
     redata_loaded >> staging
     openmeteo_loaded >> staging
