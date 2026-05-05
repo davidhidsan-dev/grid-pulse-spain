@@ -30,9 +30,20 @@ jobs:
         run: |
           python -m compileall src
           python -m compileall scripts
+          python -m compileall dags
           python -m compileall streamlit_app
           python -m compileall tests
 
       - name: Run unit tests
         run: |
           python -m unittest discover -s tests -p "test_*.py"
+
+      - name: Parse dbt project
+        env:
+          GCP_PROJECT_ID: dummy-project
+          BIGQUERY_DATASET_RAW: grid_pulse_raw
+          BIGQUERY_DATASET_ANALYTICS: grid_pulse_analytics
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/grid-pulse-dummy-service-account.json
+        run: |
+          printf '{}' > /tmp/grid-pulse-dummy-service-account.json
+          dbt parse --project-dir dbt_project --profiles-dir dbt_project --no-partial-parse

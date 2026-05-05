@@ -1,6 +1,6 @@
-pandas
-requests
-python-dotenv
-google-cloud-bigquery
-dbt-bigquery
-streamlit
+pandas==2.0.2
+requests==2.28.2
+python-dotenv==1.0.0
+google-cloud-bigquery==3.40.1
+dbt-bigquery==1.11.1
+streamlit==1.56.0

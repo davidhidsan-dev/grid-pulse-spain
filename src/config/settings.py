@@ -19,6 +19,8 @@ else:
 REFERENCE_DATA_PATH = DATA_ROOT / "reference"
 RE_DATA_RAW_PATH = DATA_ROOT / "raw" / "redata"
 RE_DATA_PROCESSED_PATH = DATA_ROOT / "processed" / "redata"
+OPENMETEO_RAW_PATH = DATA_ROOT / "raw" / "openmeteo"
+OPENMETEO_PROCESSED_PATH = DATA_ROOT / "processed" / "openmeteo"
 
 GCP_PROJECT_ID = os.getenv("GCP_PROJECT_ID")
 BIGQUERY_DATASET_RAW = os.getenv("BIGQUERY_DATASET_RAW")

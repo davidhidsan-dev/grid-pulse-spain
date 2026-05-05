@@ -11,12 +11,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from src.config.settings import OPENMETEO_RAW_PATH
 from src.config.regions import load_regions, prompt_for_regions, resolve_regions_by_slugs
 from src.extract.weather.client import OpenMeteoClient
 from src.utils.logger import get_logger
 from src.utils.terminal_ui import prompt_for_language, prompt_for_year_range, translate
-
-OPENMETEO_RAW_PATH = PROJECT_ROOT / "data" / "raw" / "openmeteo"
 
 DEFAULT_START_YEAR = 2015
 DEFAULT_END_YEAR = 2025

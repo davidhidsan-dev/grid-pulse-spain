@@ -9,7 +9,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.config.settings import BIGQUERY_DATASET_RAW, GCP_PROJECT_ID
+from src.config.settings import BIGQUERY_DATASET_RAW, GCP_PROJECT_ID, OPENMETEO_PROCESSED_PATH
 from src.load.bigquery_loader import (
     OPENMETEO_MONTHLY_SCHEMA,
     deduplicate_bigquery_table,
@@ -18,7 +18,7 @@ from src.load.bigquery_loader import (
 )
 from src.utils.logger import get_logger
 
-CSV_PATH = PROJECT_ROOT / "data" / "processed" / "openmeteo" / "openmeteo_monthly_normalized.csv"
+CSV_PATH = OPENMETEO_PROCESSED_PATH / "openmeteo_monthly_normalized.csv"
 TABLE_NAME = "openmeteo_monthly"
 logger = get_logger(__name__)
 

@@ -6,10 +6,8 @@ from typing import Any
 
 import pandas as pd
 
-from src.config.settings import DATA_ROOT
+from src.config.settings import OPENMETEO_PROCESSED_PATH, OPENMETEO_RAW_PATH
 
-OPENMETEO_RAW_PATH = DATA_ROOT / "raw" / "openmeteo"
-OPENMETEO_PROCESSED_PATH = DATA_ROOT / "processed" / "openmeteo"
 OPENMETEO_DAILY_OUTPUT_FILE_NAME = "openmeteo_daily_normalized.csv"
 DAILY_COLUMNS = [
     "temperature_2m_max",

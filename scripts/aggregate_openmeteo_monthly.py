@@ -9,10 +9,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from src.config.settings import OPENMETEO_PROCESSED_PATH
 from src.utils.logger import get_logger
 
-INPUT_FILE = PROJECT_ROOT / "data" / "processed" / "openmeteo" / "openmeteo_daily_normalized.csv"
-OUTPUT_FOLDER = PROJECT_ROOT / "data" / "processed" / "openmeteo"
+INPUT_FILE = OPENMETEO_PROCESSED_PATH / "openmeteo_daily_normalized.csv"
+OUTPUT_FOLDER = OPENMETEO_PROCESSED_PATH
 OUTPUT_FILE_NAME = "openmeteo_monthly_normalized.csv"
 logger = get_logger(__name__)
 
