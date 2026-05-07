@@ -82,13 +82,54 @@ APIs públicas
 
 Airflow orquesta el flujo completo desde `dags/grid_pulse_pipeline.py`. Para Open-Meteo, la extracción se divide por región para reducir el impacto de límites de peticiones y poder reintentar solo la parte que falle.
 
-## Capturas técnicas
+## Estructura técnica
 
-Vista general del DAG de Airflow y del linaje principal de dbt:
+El DAG de Airflow organiza el pipeline en grupos de tareas:
 
-![Airflow DAG](docs/images/airflow_dag.png)
+```mermaid
+flowchart LR
+    validate[validate_params] --> extract
 
-![dbt lineage](docs/images/dbt_lineage.png)
+    subgraph extract
+        extract_redata[extract_redata]
+        build_openmeteo[build_openmeteo_region_requests]
+        extract_openmeteo[extract_openmeteo_region<br/>mapped by region]
+        finalize_openmeteo[finalize_openmeteo_extract]
+        build_openmeteo --> extract_openmeteo --> finalize_openmeteo
+    end
+
+    subgraph transform
+        normalize_redata[normalize_redata]
+        normalize_openmeteo[normalize_openmeteo]
+        aggregate_openmeteo[aggregate_openmeteo_monthly]
+        normalize_openmeteo --> aggregate_openmeteo
+    end
+
+    subgraph load
+        load_redata[load_redata_to_bigquery]
+        load_openmeteo[load_openmeteo_to_bigquery]
+    end
+
+    subgraph model
+        staging[dbt_run_staging]
+        marts[dbt_run_marts]
+        tests[dbt_test]
+        staging --> marts --> tests
+    end
+
+    extract --> transform --> load --> model
+```
+
+El linaje principal de dbt queda así:
+
+```mermaid
+flowchart LR
+    redata_raw[redata_raw.redata_balance_electrico] --> stg_redata[stg_redata_balance_electrico]
+    openmeteo_raw[openmeteo_raw.openmeteo_monthly] --> stg_openmeteo[stg_openmeteo_monthly]
+    stg_redata --> mart[mart_energy_weather_monthly]
+    stg_openmeteo --> mart
+    mart --> curated[mart_energy_weather_monthly_curated]
+```
 
 ## Comportamiento de los datos
 
