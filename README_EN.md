@@ -14,6 +14,20 @@ Electricity systems do not exist in isolation. Demand, renewable generation, win
 
 This project builds a monthly regional dataset for Spanish autonomous communities so those relationships can be explored in a reproducible way.
 
+## Demo
+
+![Grid Pulse Spain demo](docs/images/grid_pulse_demo_en.gif)
+
+## How to read this project
+
+For a quick overview:
+
+1. Watch the Streamlit demo.
+2. Read the general flow in this README.
+3. Review `docs/architecture.md` to understand the architecture.
+4. Review `docs/data_model.md` to understand the tables and model.
+5. Open `dags/`, `dbt_project/` and `src/` for the technical details.
+
 ## What the pipeline does
 
 1. Extracts regional electricity balance data from the REData API.
@@ -24,6 +38,18 @@ This project builds a monthly regional dataset for Spanish autonomous communitie
 6. Builds staging and mart models with dbt.
 7. Produces a curated table for analysis and visualization.
 8. Makes the results explorable through a Streamlit app.
+
+## Current status
+
+The project already has a working end-to-end version:
+
+- extraction from public APIs
+- local normalization
+- BigQuery loading
+- dbt modeling
+- Airflow orchestration
+- Streamlit exploration app
+- basic CI in GitHub Actions
 
 ## Data sources
 
@@ -55,6 +81,14 @@ Public APIs
 ```
 
 Airflow orchestrates the full flow from `dags/grid_pulse_pipeline.py`. Open-Meteo extraction is split by region so API limits have a smaller impact and failed regions can be retried independently.
+
+## Technical screenshots
+
+Overview of the Airflow DAG and the main dbt lineage:
+
+![Airflow DAG](docs/images/airflow_dag.png)
+
+![dbt lineage](docs/images/dbt_lineage.png)
 
 ## Data behavior
 
@@ -123,6 +157,18 @@ To run the full pipeline from scripts:
 python scripts/run_pipeline.py --language en --regions madrid --start-year 2022 --end-year 2025
 ```
 
+Main parameters:
+
+- `--language`: language for interactive messages, `es` or `en`.
+- `--regions`: one or more region slugs separated by commas, using the slugs from `data/reference/spanish_regions.csv`, for example `madrid`, `andalucia,cataluna` or `pais_vasco`.
+- `--start-year` and `--end-year`: year range to extract. They must be used together and `start-year` cannot be greater than `end-year`.
+
+If you run the script without these arguments, the runner asks for the values interactively. To see all available options:
+
+```powershell
+python scripts/run_pipeline.py --help
+```
+
 You can also run each step separately:
 
 ```powershell
@@ -134,6 +180,13 @@ python scripts/aggregate_openmeteo_monthly.py
 python scripts/load_redata_to_bigquery.py
 python scripts/load_openmeteo_to_bigquery.py
 python scripts/run_dbt.py
+```
+
+Extraction and normalization scripts also accept `--help`, for example:
+
+```powershell
+python scripts/run_openmeteo.py --help
+python scripts/normalize_redata.py --help
 ```
 
 ## Airflow execution
@@ -216,18 +269,6 @@ Additional documentation is available in:
 This project was developed with support from Codex as a programming and learning assistant. It was used to better understand how the pipeline components work, compare technical decisions, debug issues, and speed up documentation and implementation tasks.
 
 The pipeline design, result validation, final decisions, and code review were handled manually throughout the development process.
-
-## Current status
-
-The project already has a working end-to-end version:
-
-- extraction from public APIs
-- local normalization
-- BigQuery loading
-- dbt modeling
-- Airflow orchestration
-- Streamlit exploration app
-- basic CI in GitHub Actions
 
 Natural next steps:
 
